@@ -7,13 +7,15 @@ torch, nn = try_import_torch()
 
 
 class NoisyLayer(nn.Module):
-    """A Layer that adds learnable Noise
-    a common dense layer: y = w^{T}x + b
-    a noisy layer: y = (w + \\epsilon_w*\\sigma_w)^{T}x +
+    """A Layer that adds learnable Noise to some previous layer's outputs.
+
+    Consists of:
+    - a common dense layer: y = w^{T}x + b
+    - a noisy layer: y = (w + \\epsilon_w*\\sigma_w)^{T}x +
         (b+\\epsilon_b*\\sigma_b)
-    where \epsilon are random variables sampled from factorized normal
+    , where \epsilon are random variables sampled from factorized normal
     distributions and \\sigma are trainable variables which are expected to
-    vanish along the training procedure
+    vanish along the training procedure.
     """
 
     def __init__(self, in_size, out_size, sigma0, activation="relu"):
@@ -67,20 +69,22 @@ class NoisyLayer(nn.Module):
             trainable=True)
 
     def forward(self, inputs):
-        epsilon_in = self._f_epsilon(torch.normal(
-            mean=torch.zeros([self.in_size]),
-            std=torch.ones([self.in_size])))
-        epsilon_out = self._f_epsilon(torch.normal(
-            mean=torch.zeros([self.out_size]),
-            std=torch.ones([self.out_size])))
+        epsilon_in = self._f_epsilon(
+            torch.normal(
+                mean=torch.zeros([self.in_size]),
+                std=torch.ones([self.in_size])))
+        epsilon_out = self._f_epsilon(
+            torch.normal(
+                mean=torch.zeros([self.out_size]),
+                std=torch.ones([self.out_size])))
         epsilon_w = torch.matmul(
             torch.unsqueeze(epsilon_in, -1),
             other=torch.unsqueeze(epsilon_out, 0))
         epsilon_b = epsilon_out
 
         action_activation = torch.matmul(
-            inputs, self.w + self.sigma_w * epsilon_w
-        ) + self.b + self.sigma_b * epsilon_b
+            inputs, self.w +
+            self.sigma_w * epsilon_w) + self.b + self.sigma_b * epsilon_b
 
         if self.activation is not None:
             action_activation = self.activation(action_activation)

@@ -68,18 +68,16 @@ generated_python_directories = [
     "ray/streaming/generated",
 ]
 
-optional_ray_files = []
+optional_ray_files = ["ray/nightly-wheels.yaml"]
 
 ray_autoscaler_files = [
-    "ray/autoscaler/aws/example-full.yaml",
-    "ray/autoscaler/azure/example-full.yaml",
+    "ray/autoscaler/aws/defaults.yaml", "ray/autoscaler/azure/defaults.yaml",
     "ray/autoscaler/azure/azure-vm-template.json",
     "ray/autoscaler/azure/azure-config-template.json",
-    "ray/autoscaler/gcp/example-full.yaml",
-    "ray/autoscaler/local/example-full.yaml",
-    "ray/autoscaler/kubernetes/example-full.yaml",
+    "ray/autoscaler/gcp/defaults.yaml", "ray/autoscaler/local/defaults.yaml",
+    "ray/autoscaler/kubernetes/defaults.yaml",
     "ray/autoscaler/kubernetes/kubectl-rsync.sh",
-    "ray/autoscaler/ray-schema.json"
+    "ray/autoscaler/staroid/defaults.yaml", "ray/autoscaler/ray-schema.json"
 ]
 
 ray_project_files = [
@@ -89,29 +87,27 @@ ray_project_files = [
 ]
 
 ray_dashboard_files = [
-    os.path.join(dirpath, filename)
-    for dirpath, dirnames, filenames in os.walk("ray/dashboard/client/build")
-    for filename in filenames
+    os.path.join(dirpath, filename) for dirpath, dirnames, filenames in
+    os.walk("ray/new_dashboard/client/build") for filename in filenames
 ]
 
 optional_ray_files += ray_autoscaler_files
 optional_ray_files += ray_project_files
 optional_ray_files += ray_dashboard_files
 
-if os.getenv("RAY_USE_NEW_GCS") == "on":
-    ray_files += [
-        "ray/core/src/credis/build/src/libmember.so",
-        "ray/core/src/credis/build/src/libmaster.so",
-        "ray/core/src/credis/redis/src/redis-server" + exe_suffix,
-    ]
-
 # If you're adding dependencies for ray extras, please
 # also update the matching section of requirements.txt
 # in this directory
 extras = {
     "debug": [],
-    "serve": ["uvicorn", "flask", "blist", "requests"],
-    "tune": ["tabulate", "tensorboardX", "pandas"]
+    "serve": [
+        "uvicorn", "flask", "requests", "pydantic",
+        "dataclasses; python_version < '3.7'"
+    ],
+    "tune": [
+        "tabulate", "tensorboardX", "pandas",
+        "dataclasses; python_version < '3.7'"
+    ]
 }
 
 extras["rllib"] = extras["tune"] + [
@@ -119,7 +115,7 @@ extras["rllib"] = extras["tune"] + [
     "dm_tree",
     "gym[atari]",
     "lz4",
-    "opencv-python-headless",
+    "opencv-python-headless<=4.3.0.36",
     "pyyaml",
     "scipy",
 ]
@@ -132,7 +128,11 @@ extras["all"] = list(set(chain.from_iterable(extras.values())))
 # should be carefully curated. If you change it, please reflect
 # the change in the matching section of requirements.txt
 install_requires = [
+    # TODO(alex) Pin the version once this PR is
+    # included in the stable release.
+    # https://github.com/aio-libs/aiohttp/pull/4556#issuecomment-679228562
     "aiohttp",
+    "aiohttp_cors",
     "aioredis",
     "click >= 7.0",
     "colorama",
@@ -408,7 +408,7 @@ def api_main(program, *args):
             nonlocal result
             if excinfo[1].errno != errno.ENOENT:
                 msg = excinfo[1].strerror
-                logger.error("cannot remove {}: {}" % (path, msg))
+                logger.error("cannot remove {}: {}".format(path, msg))
                 result = 1
 
         for subdir in CLEANABLE_SUBDIRS:

@@ -14,10 +14,9 @@
 
 #pragma once
 
-#include <list>
-
 #include <boost/asio.hpp>
 #include <boost/asio/error.hpp>
+#include <list>
 
 // clang-format off
 #include "ray/raylet/node_manager.h"
@@ -78,7 +77,7 @@ class Raylet {
   friend class TestObjectManagerIntegration;
 
   /// ID of this node.
-  ClientID self_node_id_;
+  NodeID self_node_id_;
   /// Information of this node.
   GcsNodeInfo self_node_info_;
 

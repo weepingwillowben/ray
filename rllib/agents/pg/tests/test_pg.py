@@ -21,7 +21,7 @@ class TestPG(unittest.TestCase):
     def test_pg_compilation(self):
         """Test whether a PGTrainer can be built with both frameworks."""
         config = pg.DEFAULT_CONFIG.copy()
-        config["num_workers"] = 0  # Run locally.
+        config["num_workers"] = 0
         num_iterations = 2
 
         for _ in framework_iterator(config):
@@ -77,13 +77,12 @@ class TestPG(unittest.TestCase):
                     feed_dict=policy._get_loss_inputs_dict(
                         train_batch, shuffle=False))
             else:
-                results = (
-                    pg.pg_tf_loss if fw in ["tf2", "tfe"] else pg.pg_torch_loss
-                )(
-                    policy,
-                    policy.model,
-                    dist_class=dist_cls,
-                    train_batch=train_batch)
+                results = (pg.pg_tf_loss
+                           if fw in ["tf2", "tfe"] else pg.pg_torch_loss)(
+                               policy,
+                               policy.model,
+                               dist_class=dist_cls,
+                               train_batch=train_batch)
 
             # Calculate expected results.
             if fw != "torch":
